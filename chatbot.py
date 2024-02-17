@@ -1,12 +1,14 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 import os
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
+client = OpenAI(
+    api_key = os.environ["OPENAI_API_KEY"]
+)
 
 st.title("My Own ChatGPT!🤖")
 
@@ -20,7 +22,9 @@ for message in st.session_state["messages"]:
 
 # initialize model
 if "model" not in st.session_state:
-    st.session_state.model = "gpt-3.5-turbo"
+    st.session_state.model = "gpt-4-turbo-preview"
+# for gpt-3.5-turbo:  gpt-3.5-turbo
+# for gpt4-turbo:  gpt-4-turbo-preview    
 
 # user input
 if user_prompt := st.chat_input("Your prompt"):
@@ -33,7 +37,7 @@ if user_prompt := st.chat_input("Your prompt"):
         message_placeholder = st.empty()
         full_response = ""
 
-        for response in openai.ChatCompletion.create(
+        for response in client.chat.completions.create(
             model=st.session_state.model,
             messages=[
                 {"role": m["role"], "content": m["content"]}
@@ -41,7 +45,7 @@ if user_prompt := st.chat_input("Your prompt"):
             ],
             stream=True,
         ):
-            full_response += response.choices[0].delta.get("content", "")
+            full_response += response.choices[0].delta.content or ""
             message_placeholder.markdown(full_response + "▌")
 
         message_placeholder.markdown(full_response)
